@@ -51,9 +51,12 @@ io.sockets.on('connection',
 
                 // This is a way to send to everyone including sender
                 io.sockets.emit('board', chess.fen());
-
+                io.sockets.emit('output',output);
             }
         );
+        socket.on('restart',function(){
+            chess = new Chess();
+        });
 
         socket.on('disconnect', function () {
             console.log("Client has disconnected");

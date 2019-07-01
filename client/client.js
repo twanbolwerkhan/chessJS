@@ -21,14 +21,8 @@ function preload() {
     pieces = loadImage('resources/pieces/chess_pieces.png');
 }
 function setup() {
-    socket = io.connect('http://localhost:3000');
-    socket.on('board',
-        // When we receive data
-        function (data) {
-            console.log(data);
-            game = data;
-        }
-    );
+    socket = io.connect('https://young-castle-54714.herokuapp.com/');
+  
     createCanvas(500, 500);
     size = width / 8;
     frameRate(60);
@@ -36,7 +30,13 @@ function setup() {
 
 function draw() {
     background('white');
- 
+    socket.on('board',
+        // When we receive data
+        function (data) {
+            // console.log(data);
+            game = data;
+        }
+    );
         drawBoard();
         drawPieces();
     
@@ -142,20 +142,19 @@ function showPiece(char, x, y) {
 function drawPieces() {
     if(game!=null){
 
-    
     var board = splitTokens(game, ' ');
     var rows = splitTokens(board[0], '/');
     for (let row = 0; row < 8; row++) {
         offset = 0;
         for (let column = 0; column < 8; column++) {
             const element = rows[row][column];
-            imageMode(CORNER);
             let fenNumber = parseInt(element);
             if (!isNaN(fenNumber)) {
-                offset = fenNumber - 1;
+                    offset = offset+fenNumber -1;
             }
             else {
                 if (pieceFrom != columnsLetter[column] + rowNumber[row]) {
+                    imageMode(CORNER);
                     showPiece(element, (column + offset) * size, row * size);
                 }
                 else {
@@ -192,5 +191,6 @@ function mouseClicked() {
     var data = {
         from: pieceFrom, to: pieceTo
     };
+    console.log(data);
     socket.emit('move', data);
 }
