@@ -22,14 +22,21 @@ function preload() {
 }
 function setup() {
     socket = io.connect('https://young-castle-54714.herokuapp.com/');
-  
+
     createCanvas(500, 500);
     size = width / 8;
     frameRate(60);
+    socket.on('output', function (output) {
+        console.log(output);
+    });
 }
-
+function restart() {
+    socket.emit('restart');
+    location.reload();
+}
 function draw() {
     background('white');
+    drawBoard();
     socket.on('board',
         // When we receive data
         function (data) {
@@ -37,16 +44,19 @@ function draw() {
             game = data;
         }
     );
-        drawBoard();
-        drawPieces();
-    
+    if (game != null) {
+        var gameInfo = splitTokens(game, ' ');
+        var rows = splitTokens(gameInfo[0], '/');
+        console.log(turn(gameInfo[1]));
+        drawPieces(rows);
+    }
 }
 
 function drawBoard() {
     for (let row = 0; row < 8; row++) {
         for (let column = 0; column < 8; column++) {
             showBoard(column, row);
-          
+
         }
     }
 }
@@ -139,18 +149,29 @@ function showPiece(char, x, y) {
     }
 }
 
-function drawPieces() {
-    if(game!=null){
+function turn(char) {
+    switch (char) {
+        case 'w':
+            return 'white';
+            break;
+        case 'b':
+            return 'black';
+            break;
+        default:
+            return 'unknown';
+            break;
+    }
+}
 
-    var board = splitTokens(game, ' ');
-    var rows = splitTokens(board[0], '/');
+function drawPieces(rows) {
+
     for (let row = 0; row < 8; row++) {
         offset = 0;
         for (let column = 0; column < 8; column++) {
             const element = rows[row][column];
             let fenNumber = parseInt(element);
             if (!isNaN(fenNumber)) {
-                    offset = offset+fenNumber -1;
+                offset = offset + fenNumber - 1;
             }
             else {
                 if (pieceFrom != columnsLetter[column] + rowNumber[row]) {
@@ -163,7 +184,7 @@ function drawPieces() {
             }
         }
     }
-}
+
 }
 
 function boardPosition(x, y, column, row) {
