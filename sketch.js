@@ -12,6 +12,8 @@ let pieceTo;
 
 let game;
 
+var socket;
+
 const columnsLetter = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const rowNumber = [8, 7, 6, 5, 4, 3, 2, 1];
 
@@ -19,6 +21,14 @@ function preload() {
     pieces = loadImage('resources/pieces/chess_pieces.png');
 }
 function setup() {
+    socket = io.connect('http://localhost:3000');
+    socket.on('move',
+        // When we receive data
+        function (data) {
+            console.log(data[from], data[to]);
+            chess.move({ from: data[from], to: data[to] });
+        }
+    );
     createCanvas(500, 500);
     size = width / 8;
     chess = new Chess();
@@ -26,41 +36,53 @@ function setup() {
 }
 function draw() {
     background('white');
-
+    game = chess.fen();
+    // game = "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2";
 
     if (!chess.game_over()) {
+      
+        drawBoard();
 
-        var rows = splitTokens(chess.fen(), '/');
-        for (let row = 0; row < 8; row++) {
-            for (let column = 0; column < 8; column++) {
-                showBoard(column, row);
-                var move = { from: pieceFrom, to: pieceTo };
-                chess.move(move);
+        drawPieces();
+
+    }
+}
+
+
+
+function drawPieces() {
+    var board = splitTokens(game, ' ');
+    var rows = splitTokens(board[0], '/');
+    for (let row = 0; row < 8; row++) {
+        offset = 0;
+        for (let column = 0; column < 8; column++) {
+            const element = rows[row][column];
+            imageMode(CORNER);
+            let fenNumber = parseInt(element);
+            if (!isNaN(fenNumber)) {
+                offset = fenNumber - 1;
             }
-        }
-
-
-        for (let row = 0; row < 8; row++) {
-            offset = 0;
-            for (let column = 0; column < 8; column++) {
-                const element = rows[row][column];
-                imageMode(CORNER);
-                let fenNumber = parseInt(element);
-                if (!isNaN(fenNumber)) {
-                    offset = fenNumber-1 ;
-                } else {
-                    if (pieceFrom != columnsLetter[column] + rowNumber[row]) {
-                        showPiece(element, (column + offset) * size, row * size);
-                    } else {
-                        movePieceWithMouse(element);
-                    }
+            else {
+                if (pieceFrom != columnsLetter[column] + rowNumber[row]) {
+                    showPiece(element, (column + offset) * size, row * size);
+                }
+                else {
+                    movePieceWithMouse(element);
                 }
             }
         }
     }
 }
 
-
+function drawBoard() {
+    for (let row = 0; row < 8; row++) {
+        for (let column = 0; column < 8; column++) {
+            showBoard(column, row);
+            var move = { from: pieceFrom, to: pieceTo };
+            chess.move(move);
+        }
+    }
+}
 
 function boardPosition(x, y, column, row) {
     var result = null;
@@ -84,8 +106,11 @@ function mouseClicked() {
             }
         }
     }
+    var data = {
+        from: pieceFrom, to: pieceTo
+    };
+    socket.emit('move', data);
 }
-
 
 
 
