@@ -164,7 +164,6 @@ function turn(char) {
 }
 
 function drawPieces(rows) {
-
     for (let row = 0; row < 8; row++) {
         offset = 0;
         for (let column = 0; column < 8; column++) {
@@ -196,10 +195,6 @@ function boardPosition(x, y, column, row) {
 }
 
 function mouseClicked() {
-    if (pieceFrom != undefined && pieceTo != undefined) {
-        pieceFrom = undefined;
-        pieceTo = undefined;
-    }
     for (let row = 0; row < 8; row++) {
         for (let column = 0; column < 8; column++) {
             if (boardPosition(mouseX, mouseY, column, row) != undefined && pieceFrom == undefined) {
@@ -209,9 +204,18 @@ function mouseClicked() {
             }
         }
     }
+    if(pieceFrom != undefined && pieceTo != undefined){
+        this.sendMove();
+    }
+   
+}
+
+function sendMove(){
     var data = {
         from: pieceFrom, to: pieceTo
     };
     console.log(data);
     socket.emit('move', data);
+    pieceFrom = undefined;
+    pieceTo = undefined;
 }
